@@ -1,0 +1,43 @@
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List
+
+app = FastAPI()
+
+# Define the quiz question model
+class Question(BaseModel):
+    question: str
+    options: List[str]
+
+# Define the quiz response model
+class QuizResponse(BaseModel):
+    answers: List[int]  # Expecting indices of selected options
+
+# Sample quiz data
+quiz_questions = [
+    Question(question="How do you usually set goals?", options=["I write them down", "I think about them", "I don't set goals"]),
+    Question(question="What is your biggest challenge in achieving goals?", options=["Lack of motivation", "No clear plan", "Getting distracted"]),
+    Question(question="How do you track your progress?", options=["Journaling", "Apps & Tools", "I don't track progress"])
+]
+
+@app.get("/quiz", response_model=List[Question])
+def get_quiz():
+    """Returns the list of quiz questions."""
+    return quiz_questions
+
+@app.post("/submit", response_model=str)
+def submit_quiz(response: QuizResponse):
+    """Processes quiz responses and provides goal-setting advice."""
+    advice = []
+    
+    if response.answers[0] == 2:
+        advice.append("Start by setting clear and written goals to improve clarity.")
+    if response.answers[1] == 1:
+        advice.append("Try breaking goals into smaller, actionable steps.")
+    if response.answers[2] == 2:
+        advice.append("Tracking progress is important. Consider using a habit tracker or journaling.")
+    
+    return " \n".join(advice) if advice else "You're on the right track! Keep going."
+
+# To run the API, save this as `main.py` and run:
+# uvicorn main:app --reload
